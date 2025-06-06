@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CWSN & SLD Analysis Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --bg-color: #4DC4FF;
+        --text-color: #333;
+        --header-bg: #005F99;
+        --table-border: #ddd;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+        --control-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --control-hover-bg: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        min-height: 100vh;
+        color: var(--text-color);
+      }
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background: var(--header-bg);
+        color: #fff;
+        padding: 30px;
+        text-align: center;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+      }
+      .header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+      .section-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 40px 0 20px;
+        text-align: center;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+      .stat-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px var(--shadow-color);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: center;
+      }
+      .stat-label {
+        font-size: 1.1em;
+        color: white;
+        margin-bottom: 10px;
+        font-weight: bold;
+        background: var(--control-bg);
+        padding: 8px 0;
+        border-radius: 8px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+      }
+      .stat-year {
+        font-size: 0.95em;
+        margin: 4px 0;
+        display: flex;
+        justify-content: space-between;
+        max-width: 220px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .stat-year .value {
+        color: #000;
+        font-weight: bold;
+        min-width: 80px;
+        text-align: right;
+      }
+      .stat-year .delta {
+        font-size: 0.85em;
+        min-width: 50px;
+        text-align: right;
+      }
+      .positive {
+        color: #2e7d32;
+      }
+      .negative {
+        color: #c62828;
+      }
+      .neutral {
+        color: #666;
+      }
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+      .chart-container {
+        background: #fff;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      .chart-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #374151;
+        text-align: center;
+      }
+      .chart-wrapper {
+        position: relative;
+        width: 100%;
+        height: 40vh;
+        min-height: 300px;
+        max-height: 500px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        overflow: hidden;
+        table-layout: auto;
+      }
+      th, td {
+        padding: 10px 6px;
+        text-align: center;
+        border-bottom: 1px solid var(--table-border);
+        white-space: normal;
+        word-wrap: break-word;
+      }
+      #stateDataTable {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      #stateDataTable th,
+      #stateDataTable td {
+        padding: 10px 6px;
+        border: 1px solid var(--table-border);
+        text-align: center;
+      }
+      #stateDataTable th {
+        background: var(--control-bg);
+        color: white;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        box-shadow: inset 0 -3px 0 rgba(255, 255, 255, 0.2);
+      }
+      .district-header {
+        color: white;
+        padding: 15px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 0;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+      }
+      .table-container {
+        background: #fff;
+        padding: 25px;
+        margin-bottom: 30px;
+        margin-top: 0;
+        overflow-x: auto;
+        border-radius: 15px;
+      }
+      .controls {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .btn,
+      .dropdown {
+        background: var(--control-bg);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        margin: 4px;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        font-size: 1rem;
+        min-width: 160px;
+        box-shadow: 0 3px 8px var(--shadow-color);
+        display: inline-block;
+        text-align: center;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        position: relative;
+      }
+      .btn:hover,
+      .dropdown:hover {
+        background: var(--control-hover-bg);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px var(--shadow-color);
+      }
+      .btn.active {
+        background: var(--control-hover-bg);
+        box-shadow: 0 6px 24px var(--shadow-color);
+      }
+      select.dropdown {
+        padding-right: 30px;
+        cursor: pointer;
+      }
+      select.dropdown option {
+        color: black;
+        background: white;
+      }
+      select.dropdown:focus {
+        outline: none;
+        box-shadow: 0 0 5px #667eea;
+      }
+      #districtTable th {
+        min-width: 80px;
+      }
+      #cwsnAllYearsTable,
+      #sldAllYearsTable {
+        width: 100%;
+      }
+      #cwsnAllYearsTable th:first-child,
+      #sldAllYearsTable th:first-child {
+        width: 15%;
+      }
+      #cwsnAllYearsTable th:nth-child(2),
+      #cwsnAllYearsTable th:nth-child(3),
+      #sldAllYearsTable th:nth-child(2),
+      #sldAllYearsTable th:nth-child(3) {
+        width: 42.5%;
+      }
+      #cwsnAllYearsTable td,
+      #sldAllYearsTable td {
+        white-space: normal;
+        word-wrap: break-word;
+      }
+      th {
+        color: white;
+        font-weight: 600;
+        background: var(--control-bg);
+        position: sticky;
+        top: 0;
+        box-shadow: inset 0 -3px 0 rgba(255, 255, 255, 0.2);
+        z-index: 3;
+        user-select: none;
+      }
+      th.sticky-left {
+        left: 0;
+        z-index: 4;
+        position: sticky;
+        background: var(--control-bg);
+        box-shadow: inset 3px 0 5px -2px rgba(0, 0, 0, 0.2);
+        text-align: left;
+        padding-left: 16px;
+      }
+      td.sticky-left {
+        text-align: left;
+        position: sticky;
+        left: 0;
+        box-shadow: inset 3px 0 5px -2px var(--shadow-color);
+        font-weight: 600;
+        user-select: none;
+      }
+      tr:hover {
+        background-color: rgba(99, 102, 241, 0.05);
+      }
+      .highlight {
+        background-color: rgba(34, 197, 94, 0.1);
+        font-weight: 600;
+      }
+      .value-delta {
+        display: block;
+        font-size: 0.75em;
+        margin-top: 2px;
+        color: #666;
+      }
+      .positiveDelta {
+        color: #2e7d32;
+        font-weight: 600;
+      }
+      .negativeDelta {
+        color: #c62828;
+        font-weight: 600;
+      }
+      .divider-row {
+        background: #e2e8f0;
+        border-top: 2px solid #333;
+      }
+      .footer {
+        margin-top: 40px;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 0.8em;
+        color: #ffffff;
+      }
+      @media (max-width: 768px) {
+        .chart-wrapper {
+          height: 30vh;
+          min-height: 250px;
+        }
+        table, #stateDataTable {
+          font-size: 0.75rem;
+        }
+        th, td, #stateDataTable th, #stateDataTable td {
+          padding: 8px 4px;
+        }
+        .btn, .dropdown {
+          min-width: 140px;
+          padding: 10px 16px;
+          font-size: 0.9rem;
+        }
+        #districtTable th {
+          min-width: 60px;
+        }
+        #cwsnAllYearsTable th:first-child,
+        #sldAllYearsTable th:first-child {
+          width: 20%;
+        }
+        #cwsnAllYearsTable th:nth-child(2),
+        #cwsnAllYearsTable th:nth-child(3),
+        #sldAllYearsTable th:nth-child(2),
+        #sldAllYearsTable th:nth-child(3) {
+          width: 40%;
+        }
+      }
+      @media (max-width: 480px) {
+        .chart-wrapper {
+          height: 25vh;
+          min-height: 200px;
+        }
+        table, #stateDataTable {
+          font-size: 0.65rem;
+        }
+        th, td, #stateDataTable th, #stateDataTable td {
+          padding: 6px 3px;
+        }
+        #districtTable th {
+          min-width: 50px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>CWSN & SLD Analysis Dashboard</h1>
+        <p>Children With Specific Learning Disabilities (SLDs) in Uttar Pradesh</p> 
+        <p>A Comprehensive Study (2020-2025)</p>
+      </div>
+
+      <div class="section-title">State-Level Overview & Year-on-Year (2020-21 → 2024-25)</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Schools in UP</div>
+          <div class="stat-year"><span>2020-21:</span><span class="value">133,652</span><span class="delta neutral">(–)</span></div>
+          <div class="stat-year"><span>2021-22:</span><span class="value">133,652</span><span class="delta neutral">(0.0%)</span></div>
+          <div class="stat-year"><span>2022-23:</span><span class="value">133,652</span><span class="delta neutral">(0.0%)</span></div>
+          <div class="stat-year"><span>2023-24:</span><span class="value">133,652</span><span class="delta neutral">(0.0%)</span></div>
+          <div class="stat-year"><span>2024-25:</span><span class="value">133,652</span><span class="delta neutral">(0.0%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Schools with CWSN Students</div>
+          <div class="stat-year"><span>2020-21:</span><span class="value">93,413</span><span class="delta neutral">(–)</span></div>
+          <div class="stat-year"><span>2021-22:</span><span class="value">116,565</span><span class="delta positive">(+24.8%)</span></div>
+          <div class="stat-year"><span>2022-23:</span><span class="value">112,462</span><span class="delta negative">(−3.5%)</span></div>
+          <div class="stat-year"><span>2023-24:</span><span class="value">105,627</span><span class="delta negative">(−6.1%)</span></div>
+          <div class="stat-year"><span>2024-25:</span><span class="value">98,801</span><span class="delta negative">(−6.4%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total CWSN Students Enrolled</div>
+          <div class="stat-year"><span>2020-21:</span><span class="value">257,020</span><span class="delta neutral">(–)</span></div>
+          <div class="stat-year"><span>2021-22:</span><span class="value">251,684</span><span class="delta negative">(−2.1%)</span></div>
+          <div class="stat-year"><span>2022-23:</span><span class="value">299,532</span><span class="delta positive">(+19.0%)</span></div>
+          <div class="stat-year"><span>2023-24:</span><span class="value">341,087</span><span class="delta positive">(+13.9%)</span></div>
+          <div class="stat-year"><span>2024-25:</span><span class="value">297,897</span><span class="delta negative">(−12.7%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Schools with SLD Students</div>
+          <div class="stat-year"><span>2020-21:</span><span class="value">2,099</span><span class="delta neutral">(–)</span></div>
+          <div class="stat-year"><span>2021-22:</span><span class="value">795</span><span class="delta negative">(−62.1%)</span></div>
+          <div class="stat-year"><span>2022-23:</span><span class="value">7,729</span><span class="delta positive">(+871.9%)</span></div>
+          <div class="stat-year"><span>2023-24:</span><span class="value">24,488</span><span class="delta positive">(+216.8%)</span></div>
+          <div class="stat-year"><span>2024-25:</span><span class="value">5,148</span><span class="delta negative">(−79.0%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total SLD Students Enrolled</div>
+          <div class="stat-year"><span>2020-21:</span><span class="value">2,975</span><span class="delta neutral">(–)</span></div>
+          <div class="stat-year"><span>2021-22:</span><span class="value">1,098</span><span class="delta negative">(−63.1%)</span></div>
+          <div class="stat-year"><span>2022-23:</span><span class="value">12,780</span><span class="delta positive">(+1,064.9%)</span></div>
+          <div class="stat-year"><span>2023-24:</span><span class="value">50,924</span><span class="delta positive">(+298.7%)</span></div>
+          <div class="stat-year"><span>2024-25:</span><span class="value">9,585</span><span class="delta negative">(−81.2%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">SLD to CWSN Students (%)</div>
+          <div class="stat-year"><span>2020-21:</span><span class="value">1.2%</span><span class="delta neutral">(–)</span></div>
+          <div class="stat-year"><span>2021-22:</span><span class="value">0.4%</span><span class="delta negative">(−64.7%)</span></div>
+          <div class="stat-year"><span>2022-23:</span><span class="value">4.3%</span><span class="delta positive">(+975.0%)</span></div>
+          <div class="stat-year"><span>2023-24:</span><span class="value">14.9%</span><span class="delta positive">(+246.5%)</span></div>
+          <div class="stat-year"><span>2024-25:</span><span class="value">3.2%</span><span class="delta negative">(−78.5%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">SLD to CWSN Schools (%)</div>
+          <div class="stat-year"><span>2020-21:</span><span class="value">2.2%</span><span class="delta neutral">(–)</span></div>
+          <div class="stat-year"><span>2021-22:</span><span class="value">0.7%</span><span class="delta negative">(−68.2%)</span></div>
+          <div class="stat-year"><span>2022-23:</span><span class="value">6.9%</span><span class="delta positive">(+885.7%)</span></div>
+          <div class="stat-year"><span>2023-24:</span><span class="value">23.2%</span><span class="delta positive">(+236.2%)</span></div>
+          <div class="stat-year"><span>2024-25:</span><span class="value">5.2%</span><span class="delta negative">(−77.6%)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CWSN to Total Schools (%)</div>
+          <div class="stat-year"><span>2020-21:</span><span class="value">69.9%</span><span class="delta neutral">(–)</span></div>
+          <div class="stat-year"><span>2021-22:</span><span class="value">87.2%</span><span class="delta positive">(+24.7%)</span></div>
+          <div class="stat-year"><span>2022-23:</span><span class="value">84.1%</span><span class="delta negative">(−3.6%)</span></div>
+          <div class="stat-year"><span>2023-24:</span><span class="value">79.0%</span><span class="delta negative">(−6.1%)</span></div>
+          <div class="stat-year"><span>2024-25:</span><span class="value">73.9%</span><span class="delta negative">(−6.5%)</span></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-container">
+          <div class="chart-title">5-Year State-Level Trend</div>
+          <div class="chart-wrapper">
+            <canvas id="trendChart"></canvas>
+          </div>
+          <table id="stateDataTable">
+            <thead>
+              <tr>
+                <th>Session</th>
+                <th>Schools with CWSN</th>
+                <th>Total CWSN Students</th>
+                <th>Schools with SLD</th>
+                <th>Total SLD Students</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>2020-21</td><td>93,413</td><td>257,020</td><td>2,099</td><td>2,975</td></tr>
+              <tr><td>2021-22</td><td>116,565</td><td>251,684</td><td>795</td><td>1,098</td></tr>
+              <tr><td>2022-23</td><td>112,462</td><td>299,532</td><td>7,729</td><td>12,780</td></tr>
+              <tr><td>2023-24</td><td>105,627</td><td>341,087</td><td>24,488</td><td>50,924</td></tr>
+              <tr><td>2024-25</td><td>98,801</td><td>297,897</td><td>5,148</td><td>9,585</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="district-header">District-Wise Performance & Year-Wise Breakdown</div>
+      <div class="table-container">
+        <div class="controls">
+          <button class="btn active" onclick="sortDistricts('district')">Sort by District</button>
+          <button class="btn" onclick="sortDistricts('totalSchools')">Sort by Total Schools</button>
+          <select id="dataTypeToggle" class="dropdown" onchange="populateDistrictTable()">
+            <option value="both">Show Both</option>
+            <option value="cwsn">Show CWSN Only</option>
+            <option value="sld">Show SLD Only</option>
+          </select>
+        </div>
+        <div style="overflow-x: auto">
+          <table id="districtTable">
+            <thead></thead>
+            <tbody id="districtBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-title">Year-Wise Top 5 & Bottom 5 Districts</div>
+      <div class="table-container">
+        <div class="controls">
+          <button class="btn" onclick="handleYearButton('2020-21')" id="btn2020-21">2020-21</button>
+          <button class="btn" onclick="handleYearButton('2021-22')" id="btn2021-22">2021-22</button>
+          <button class="btn" onclick="handleYearButton('2022-23')" id="btn2022-23">2022-23</button>
+          <button class="btn" onclick="handleYearButton('2023-24')" id="btn2023-24">2023-24</button>
+          <button class="btn active" onclick="handleYearButton('2024-25')" id="btn2024-25">2024-25</button>
+          <button class="btn" onclick="compileCWSN()">Compare (CWSN Students)</button>
+          <button class="btn" onclick="compileSLD()">Compare (SLD Students)</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px;">
+          <div>
+            <div class="chart-title" style="font-size: 1.2em; margin-bottom: 10px; color: white">Top 5 Districts by CWSN Students</div>
+            <div style="overflow-x: auto">
+              <table id="cwsnTop5Table">
+                <thead><tr><th>Rank</th><th>District</th><th>CWSN Students</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="chart-title" style="font-size: 1.2em; margin-bottom: 10px; color: white">Bottom 5 Districts by CWSN Students</div>
+            <div style="overflow-x: auto">
+              <table id="cwsnBottom5Table">
+                <thead><tr><th>Rank</th><th>District</th><th>CWSN Students</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div>
+            <div class="chart-title" style="font-size: 1.2em; margin-bottom: 10px; color: white">Top 5 Districts by SLD Students</div>
+            <div style="overflow-x: auto">
+              <table id="sldTop5Table">
+                <thead><tr><th>Rank</th><th>District</th><th>SLD Students</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="chart-title" style="font-size: 1.2em; margin-bottom: 10px; color: white">Bottom 5 Districts by SLD Students</div>
+            <div style="overflow-x: auto">
+              <table id="sldBottom5Table">
+                <thead><tr><th>Rank</th><th>District</th><th>SLD Students</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="cwsnCompiled" style="display: none">
+          <div class="chart-title" style="margin-bottom: 10px; color: black"><br>Compiled Top 5 & Bottom 5 CWSN Across All Sessions</br></div>
+          <div style="overflow-x: auto">
+            <table id="cwsnAllYearsTable">
+              <thead><tr><th class="sticky-left">Session</th><th>Top 5 CWSN (District – #Students)</th><th>Bottom 5 CWSN (District – #Students)</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="sldCompiled" style="display: none">
+          <div class="chart-title" style="margin-bottom: 10px; color: black"><br> Compiled Top 5 & Bottom 5 SLD Across All Sessions</br></div>
+          <div style="overflow-x: auto">
+            <table id="sldAllYearsTable">
+              <thead><tr><th class="sticky-left">Session</th><th>Top 5 SLD (District – #Students)</th><th>Bottom 5 SLD (District – #Students)</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Note: Dashboard is based on the SAMARTH database dated 29.05.2025, Session 2025-26 is under compilation 
+        <p>Samagra Shiksha, Uttar Pradesh</p></p>
+      </div>
+    </div>
+
+    <script>
+      const districtMaster = [
+        ["Agra", 2508],
+        ["Aligarh", 2128],
+        ["Ambedkar Nagar", 1591],
+        ["Amethi", 1587],
+        ["Amroha", 1275],
+        ["Auraiya", 1266],
+        ["Ayodhya", 1800],
+        ["Azamgarh", 2724],
+        ["Baghpat", 534],
+        ["Bahraich", 2818],
+        ["Ballia", 2266],
+        ["Balrampur", 1824],
+        ["Banda", 1754],
+        ["Barabanki", 2651],
+        ["Bareilly", 2500],
+        ["Basti", 2090],
+        ["Bhadohi", 896],
+        ["Bijnor", 2133],
+        ["Budaun", 2173],
+        ["Bulandshahr", 1874],
+        ["Chandauli", 1194],
+        ["Chitrakoot", 1261],
+        ["Deoria", 2134],
+        ["Etah", 1699],
+        ["Etawah", 1486],
+        ["Farrukhabad", 1582],
+        ["Fatehpur", 2136],
+        ["Firozabad", 1865],
+        ["Gautam Buddha Nagar", 515],
+        ["Ghaziabad", 455],
+        ["Ghazipur", 2283],
+        ["Gonda", 2629],
+        ["Gorakhpur", 2521],
+        ["Hamirpur", 974],
+        ["Hapur", 507],
+        ["Hardoi", 3466],
+        ["Hathras", 1241],
+        ["Jalaun", 1518],
+        ["Jaunpur", 2823],
+        ["Jhansi", 1461],
+        ["Kannauj", 1464],
+        ["Kanpur Dehat", 1926],
+        ["Kanpur Nagar", 1787],
+        ["Kasganj", 1271],
+        ["Kaushambi", 1098],
+        ["Kushi Nagar", 2478],
+        ["Kheri", 3121],
+        ["Lalitpur", 1360],
+        ["Lucknow", 1627],
+        ["Maharajganj", 1708],
+        ["Mahoba", 853],
+        ["Mainpuri", 1912],
+        ["Mathura", 1549],
+        ["Mau", 1219],
+        ["Meerut", 1081],
+        ["Mirzapur", 1816],
+        ["Moradabad", 1417],
+        ["Muzaffar Nagar", 959],
+        ["Pilibhit", 1514],
+        ["Pratapgarh", 2389],
+        ["Prayagraj", 2874],
+        ["Raebareli", 2322],
+        ["Rampur", 1604],
+        ["Saharanpur", 1447],
+        ["Sambhal", 1300],
+        ["Sant Kabir Nagar", 1254],
+        ["Shahjahanpur", 2740],
+        ["Shamli", 600],
+        ["Shrawasti", 989],
+        ["Siddharthnagar", 2275],
+        ["Sitapur", 3534],
+        ["Sonbhadra", 2070],
+        ["Sultanpur", 2081],
+        ["Unnao", 2722],
+        ["Varanasi", 1149]
+      ];
+
+      const yearlyData = {
+        "2020-21": [
+          [1452, 5485, 45, 59],
+          [1333, 4422, 6, 7],
+          [1022, 2976, 18, 23],
+          [953, 2412, 1, 2],
+          [794, 2173, 2, 3],
+          [784, 1977, 2, 2],
+          [1223, 3103, 26, 32],
+          [2318, 5947, 66, 82],
+          [415, 1633, 12, 14],
+          [2076, 5247, 104, 153],
+          [1425, 4383, 72, 101],
+          [1385, 3441, 27, 42],
+          [1130, 2272, 4, 5],
+          [1832, 4493, 74, 108],
+          [1979, 6181, 98, 163],
+          [1871, 3433, 9, 10],
+          [732, 2117, 14, 23],
+          [1261, 4089, 10, 11],
+          [1558, 5027, 119, 187],
+          [1434, 3921, 22, 29],
+          [1038, 2576, 19, 24],
+          [693, 1516, 22, 39],
+          [1552, 3821, 19, 27],
+          [800, 2244, 3, 4],
+          [864, 1972, 10, 14],
+          [952, 2729, 46, 58],
+          [1581, 3222, 34, 47],
+          [1091, 2971, 65, 101],
+          [372, 2061, 6, 7],
+          [334, 2550, 0, 0],
+          [1863, 4923, 15, 16],
+          [2114, 4519, 29, 42],
+          [1939, 6685, 50, 61],
+          [574, 1369, 12, 14],
+          [388, 1314, 4, 6],
+          [2405, 6057, 97, 140],
+          [819, 2074, 50, 80],
+          [1002, 1836, 27, 44],
+          [1949, 5912, 14, 14],
+          [825, 2345, 30, 41],
+          [760, 2306, 11, 12],
+          [955, 2083, 16, 19],
+          [1270, 4428, 78, 135],
+          [917, 2152, 19, 26],
+          [969, 2558, 14, 17],
+          [1546, 5188, 7, 9],
+          [2252, 6319, 5, 6],
+          [794, 1991, 35, 56],
+          [1278, 3811, 51, 73],
+          [1212, 3769, 64, 81],
+          [559, 1319, 10, 11],
+          [1021, 2367, 10, 11],
+          [1056, 3732, 81, 140],
+          [843, 2478, 17, 17],
+          [816, 4173, 9, 12],
+          [1063, 3108, 23, 25],
+          [1230, 3851, 19, 27],
+          [783, 3114, 31, 47],
+          [1140, 2372, 3, 4],
+          [1699, 4186, 27, 31],
+          [2387, 7708, 104, 129],
+          [1696, 3265, 22, 28],
+          [1110, 3059, 23, 32],
+          [1163, 4084, 27, 48],
+          [1006, 3235, 22, 36],
+          [815, 1978, 6, 8],
+          [1649, 4487, 4, 4],
+          [501, 1520, 11, 18],
+          [807, 1323, 0, 0],
+          [1759, 4119, 10, 12],
+          [2335, 6100, 21, 25],
+          [1375, 2465, 3, 3],
+          [1798, 3598, 13, 13],
+          [1907, 3343, 16, 20],
+          [810, 4003, 4, 5]
+        ],
+        "2021-22": [
+          [1969, 5244, 9, 11],
+          [1798, 4501, 6, 6],
+          [1439, 3018, 5, 10],
+          [1279, 1713, 2, 4],
+          [1085, 2182, 0, 0],
+          [1061, 1872, 7, 9],
+          [1528, 3113, 11, 25],
+          [2702, 7117, 14, 17],
+          [494, 1629, 2, 2],
+          [2507, 5083, 4, 4],
+          [1895, 4316, 6, 7],
+          [1651, 3341, 10, 14],
+          [1426, 2216, 4, 4],
+          [2192, 4431, 18, 23],
+          [2316, 6052, 20, 27],
+          [2047, 3202, 24, 39],
+          [859, 2093, 7, 7],
+          [1762, 4179, 8, 14],
+          [1911, 5060, 7, 11],
+          [1699, 3801, 7, 7],
+          [1151, 2576, 0, 0],
+          [838, 1586, 15, 18],
+          [1926, 3741, 5, 8],
+          [1340, 2135, 3, 3],
+          [1139, 2053, 17, 25],
+          [1281, 2511, 20, 26],
+          [1887, 3497, 26, 36],
+          [1439, 2954, 0, 0],
+          [483, 2055, 6, 7],
+          [455, 2481, 1, 1],
+          [2223, 4833, 7, 9],
+          [2483, 4883, 26, 37],
+          [2298, 6544, 42, 57],
+          [766, 1389, 1, 1],
+          [479, 1325, 1, 1],
+          [2946, 6050, 11, 17],
+          [1052, 1845, 1, 1],
+          [1434, 1866, 0, 0],
+          [2538, 5378, 2, 4],
+          [1040, 1879, 10, 14],
+          [1151, 2358, 4, 4],
+          [1409, 2000, 10, 11],
+          [1561, 4394, 37, 55],
+          [1140, 2191, 22, 36],
+          [1111, 2649, 3, 8],
+          [2254, 4766, 7, 8],
+          [2573, 6178, 2, 2],
+          [1045, 1940, 7, 11],
+          [1483, 3258, 31, 47],
+          [1525, 3137, 0, 0],
+          [722, 1232, 9, 10],
+          [1376, 2261, 1, 1],
+          [1319, 3461, 14, 17],
+          [1089, 2522, 8, 8],
+          [1001, 4036, 22, 39],
+          [1430, 3213, 8, 11],
+          [1371, 3643, 22, 29],
+          [893, 3076, 1, 3],
+          [1340, 2376, 7, 9],
+          [2168, 3616, 6, 6],
+          [2723, 7623, 50, 67],
+          [1941, 3638, 29, 35],
+          [1406, 3068, 16, 22],
+          [1333, 3911, 68, 96],
+          [1244, 3170, 10, 12],
+          [1057, 1787, 4, 6],
+          [2197, 4401, 0, 0],
+          [580, 1513, 6, 6],
+          [889, 1637, 2, 2],
+          [2167, 4040, 3, 3],
+          [2879, 6080, 6, 6],
+          [1726, 2450, 0, 0],
+          [2023, 3518, 4, 6],
+          [2504, 3053, 11, 16],
+          [1117, 3744, 0, 0]
+        ],
+        "2022-23": [
+          [1781, 4999, 124, 175],
+          [1681, 5078, 65, 116],
+          [1393, 3690, 85, 131],
+          [1193, 2282, 33, 42],
+          [1035, 3674, 190, 342],
+          [968, 2259, 121, 200],
+          [1465, 3462, 52, 80],
+          [2684, 7514, 335, 525],
+          [491, 1977, 101, 172],
+          [2448, 6312, 114, 168],
+          [1867, 5750, 91, 140],
+          [1630, 3604, 67, 104],
+          [1378, 2719, 20, 24],
+          [2106, 5316, 114, 183],
+          [2285, 7055, 280, 539],
+          [2038, 4100, 205, 310],
+          [840, 2719, 61, 101],
+          [1645, 4990, 139, 237],
+          [1810, 5500, 111, 149],
+          [1652, 4960, 127, 224],
+          [1140, 2620, 42, 58],
+          [789, 1701, 46, 70],
+          [1882, 4591, 114, 154],
+          [1295, 2773, 51, 77],
+          [1073, 2119, 54, 102],
+          [1210, 2708, 101, 133],
+          [1849, 4028, 66, 94],
+          [1356, 3477, 69, 87],
+          [480, 2573, 70, 122],
+          [448, 3034, 4, 6],
+          [2192, 5739, 72, 95],
+          [2424, 6157, 140, 203],
+          [2250, 6738, 62, 84],
+          [731, 1696, 81, 139],
+          [459, 1428, 34, 51],
+          [2821, 6380, 205, 353],
+          [1021, 1962, 72, 113],
+          [1425, 2057, 49, 65],
+          [2447, 6540, 110, 165],
+          [983, 2503, 82, 148],
+          [1083, 2842, 70, 97],
+          [1296, 2089, 105, 133],
+          [1519, 5144, 259, 526],
+          [1118, 2399, 65, 98],
+          [1106, 3359, 56, 74],
+          [2191, 6247, 219, 313],
+          [2485, 7231, 4, 7],
+          [956, 2098, 32, 43],
+          [1442, 3715, 109, 206],
+          [1488, 4787, 226, 438],
+          [691, 1258, 28, 36],
+          [1241, 2265, 14, 15],
+          [1232, 3557, 93, 138],
+          [1043, 2846, 115, 157],
+          [961, 4628, 150, 269],
+          [1330, 3526, 45, 64],
+          [1337, 5381, 272, 460],
+          [878, 4660, 366, 901],
+          [1297, 2888, 13, 13],
+          [2119, 4892, 235, 412],
+          [2687, 9145, 339, 610],
+          [1894, 4292, 58, 86],
+          [1348, 3531, 88, 120],
+          [1306, 4087, 85, 127],
+          [1224, 3737, 103, 139],
+          [1028, 2326, 49, 73],
+          [1991, 4813, 16, 20],
+          [575, 1697, 84, 169],
+          [868, 1939, 2, 2],
+          [2105, 4885, 86, 118],
+          [2724, 7201, 25, 28],
+          [1685, 2997, 46, 85],
+          [2000, 6031, 199, 359],
+          [2446, 3480, 81, 118],
+          [1103, 4775, 33, 45]
+        ],
+        "2023-24": [
+          [1632, 5417, 525, 1264],
+          [1563, 6335, 257, 620],
+          [1313, 3800, 151, 208],
+          [1112, 2435, 90, 126],
+          [935, 3712, 205, 497],
+          [893, 2452, 191, 357],
+          [1356, 3645, 263, 442],
+          [2622, 9330, 1040, 2054],
+          [478, 1912, 138, 268],
+          [2355, 8327, 767, 2026],
+          [1625, 5307, 402, 914],
+          [1543, 4090, 258, 672],
+          [1292, 3325, 62, 88],
+          [2013, 5761, 282, 465],
+          [2231, 8760, 830, 1762],
+          [2014, 5867, 737, 1333],
+          [808, 3002, 112, 212],
+          [1429, 4049, 74, 114],
+          [1721, 5331, 371, 710],
+          [1544, 4749, 311, 599],
+          [1114, 4808, 592, 1760],
+          [762, 2045, 114, 213],
+          [1748, 5072, 445, 763],
+          [936, 2384, 267, 665],
+          [1008, 2522, 174, 267],
+          [1109, 2705, 169, 269],
+          [1774, 5697, 416, 810],
+          [1228, 3479, 126, 225],
+          [445, 2414, 146, 340],
+          [364, 2037, 198, 784],
+          [2134, 7398, 450, 837],
+          [2321, 8698, 667, 1405],
+          [2151, 7235, 162, 192],
+          [672, 2002, 166, 306],
+          [444, 1715, 92, 171],
+          [2611, 6955, 624, 1285],
+          [989, 3047, 358, 818],
+          [1370, 3248, 685, 1265],
+          [2447, 6484, 341, 637],
+          [929, 2478, 44, 65],
+          [952, 3206, 298, 632],
+          [1214, 3025, 329, 568],
+          [1402, 5104, 549, 1210],
+          [1057, 3853, 445, 1332],
+          [1079, 4585, 372, 717],
+          [1861, 5285, 594, 1228],
+          [2367, 7286, 12, 16],
+          [897, 2176, 81, 116],
+          [1393, 5279, 590, 1142],
+          [1488, 4787, 226, 438],
+          [663, 2063, 241, 429],
+          [1121, 2086, 18, 20],
+          [1173, 3399, 176, 365],
+          [959, 3208, 298, 590],
+          [901, 4338, 186, 417],
+          [1174, 3153, 59, 86],
+          [1302, 5001, 172, 300],
+          [864, 4681, 287, 669],
+          [1297, 2888, 13, 13],
+          [2010, 6190, 715, 1408],
+          [2604, 9661, 622, 1096],
+          [1832, 6792, 720, 1719],
+          [1266, 3562, 172, 250],
+          [1259, 5003, 319, 693],
+          [1163, 4007, 289, 559],
+          [965, 3076, 340, 752],
+          [1845, 4994, 44, 60],
+          [553, 1924, 224, 453],
+          [868, 1939, 2, 2],
+          [1981, 6679, 535, 1037],
+          [2724, 7586, 25, 28],
+          [1685, 2997, 46, 85],
+          [1923, 5913, 327, 604],
+          [2387, 4940, 650, 884],
+          [1080, 5099, 43, 59]
+        ],
+        "2024-25": [
+          [1534, 4927, 54, 95],
+          [1436, 4896, 9, 12],
+          [1103, 2615, 23, 30],
+          [1024, 2250, 38, 64],
+          [852, 2760, 37, 61],
+          [847, 2158, 63, 113],
+          [1290, 3413, 44, 61],
+          [2449, 7620, 73, 110],
+          [435, 1455, 59, 104],
+          [2195, 7212, 108, 226],
+          [1508, 4244, 7, 9],
+          [1475, 5513, 648, 1790],
+          [1165, 2508, 6, 7],
+          [1897, 5427, 76, 113],
+          [2105, 7001, 149, 256],
+          [1978, 5686, 213, 355],
+          [763, 2622, 48, 129],
+          [1351, 3774, 43, 53],
+          [1630, 4945, 70, 101],
+          [1488, 4613, 133, 217],
+          [1086, 4354, 86, 210],
+          [730, 1886, 28, 43],
+          [1748, 5072, 445, 763],
+          [853, 2147, 40, 74],
+          [918, 2384, 55, 103],
+          [1032, 2474, 66, 99],
+          [1700, 5341, 51, 71],
+          [1158, 3231, 21, 25],
+          [390, 1665, 57, 93],
+          [351, 1633, 13, 27],
+          [1957, 5925, 20, 25],
+          [2202, 7464, 60, 94],
+          [2014, 6042, 9, 9],
+          [620, 1611, 6, 6],
+          [412, 1397, 32, 47],
+          [2518, 6716, 102, 161],
+          [872, 2437, 33, 40],
+          [1185, 2634, 118, 182],
+          [2062, 6091, 88, 148],
+          [877, 2218, 11, 16],
+          [873, 2530, 35, 52],
+          [1072, 2520, 57, 70],
+          [1320, 4752, 202, 390],
+          [976, 3138, 24, 43],
+          [1033, 4178, 36, 63],
+          [1681, 4359, 60, 114],
+          [2293, 6650, 0, 0],
+          [835, 1949, 22, 24],
+          [1318, 4600, 87, 146],
+          [1391, 4916, 423, 1007],
+          [614, 1435, 4, 5],
+          [1121, 2086, 18, 20],
+          [1173, 3314, 80, 121],
+          [903, 2797, 26, 42],
+          [849, 4675, 249, 683],
+          [1103, 2844, 14, 16],
+          [1263, 4727, 123, 226],
+          [830, 3895, 84, 196],
+          [1160, 3045, 26, 42],
+          [1855, 5388, 144, 268],
+          [2500, 8535, 72, 104],
+          [1760, 6037, 88, 146],
+          [1179, 3269, 65, 91],
+          [1259, 5003, 319, 693],
+          [1163, 4007, 289, 559],
+          [895, 2618, 59, 99],
+          [1717, 4458, 7, 7],
+          [528, 1592, 46, 66],
+          [823, 3064, 17, 31],
+          [1836, 5401, 122, 193],
+          [2463, 6891, 18, 20],
+          [1545, 6210, 594, 1704],
+          [1879, 5135, 43, 61],
+          [2048, 4466, 129, 213],
+          [853, 2208, 8, 9]
+        ]
+      };
+
+      function createPctChangeElement(current, prev) {
+    const currNum = parseFloat(current);
+    const prevNum = prev === null || isNaN(parseFloat(prev)) ? null : parseFloat(prev);
+
+    console.log(`createPctChangeElement called: currNum=${currNum}, prevNum=${prevNum}`);
+
+    if (prevNum === null) {
+        return '<span class="neutral">–</span>';
+    }
+
+    if (prevNum === 0 && currNum > 0) {
+        return `<span class="positiveDelta">From 0 to ${currNum}</span>`;
+    }
+
+    if (prevNum === 0 && currNum === 0) {
+        return '<span class="neutral">0%</span>';
+    }
+
+    const change = ((currNum - prevNum) / prevNum) * 100;
+
+    if (!isFinite(change)) {
+        return '<span class="neutral">–</span>';
+    }
+
+    const val = change.toFixed(1) + "%";
+    const cls = change > 0 ? "positiveDelta" : change < 0 ? "negativeDelta" : "neutral";
+
+    return `<span class="${cls}">${change > 0 ? "+" : ""}${val}</span>`;
+}
+
+
+      function populateDistrictTable() {
+        const dataType = document.getElementById("dataTypeToggle").value;
+        const thead = document.querySelector("#districtTable thead");
+        const tbody = document.querySelector("#districtBody");
+
+        let headers = '<tr><th class="sticky-left">District</th><th>Total Schools</th>';
+        let years = ["2020-21", "2021-22", "2022-23", "2023-24", "2024-25"];
+
+        if (dataType === "both") {
+          years.forEach((year) => {
+            headers += `<th>CWSN Schools (${year})</th><th>CWSN Students (${year})</th><th>% Δ CWSN Students</th><th>SLD Students (${year})</th><th>% Δ SLD Students</th>`;
+          });
+        } else if (dataType === "cwsn") {
+          years.forEach((year) => {
+            headers += `<th>CWSN Schools (${year})</th><th>CWSN Students (${year})</th><th>% Δ CWSN Students</th>`;
+          });
+        } else if (dataType === "sld") {
+          years.forEach((year) => {
+            headers += `<th>SLD Students (${year})</th><th>% Δ SLD Students</th>`;
+          });
+        }
+        headers += '</tr>';
+        thead.innerHTML = headers;
+
+        tbody.innerHTML = "";
+        for (let i = 0; i < districtMaster.length; i++) {
+          const districtName = districtMaster[i][0];
+          const totalSchools = districtMaster[i][1];
+          let rowHTML = `<tr><td class="sticky-left">${districtName}</td><td>${totalSchools}</td>`;
+
+          for (let y = 0; y < 5; y++) {
+            const yearData = yearlyData[years[y]][i];
+            if (dataType === "both") {
+              rowHTML += `<td>${yearData[0]}</td><td>${yearData[1]}</td>`;
+              const prevCWSN = y > 0 ? yearlyData[years[y - 1]][i][1] : null;
+              rowHTML += `<td>${createPctChangeElement(yearData[1], prevCWSN)}</td><td>${yearData[3]}</td>`;
+              const prevSLD = y > 0 ? yearlyData[years[y - 1]][i][3] : null;
+              rowHTML += `<td>${createPctChangeElement(yearData[3], prevSLD)}</td>`;
+            } else if (dataType === "cwsn") {
+              rowHTML += `<td>${yearData[0]}</td><td>${yearData[1]}</td>`;
+              const prevCWSN = y > 0 ? yearlyData[years[y - 1]][i][1] : null;
+              rowHTML += `<td>${createPctChangeElement(yearData[1], prevCWSN)}</td>`;
+            } else if (dataType === "sld") {
+              rowHTML += `<td>${yearData[3]}</td>`;
+              const prevSLD = y > 0 ? yearlyData[years[y - 1]][i][3] : null;
+              rowHTML += `<td>${createPctChangeElement(yearData[3], prevSLD)}</td>`;
+            }
+          }
+          rowHTML += "</tr>";
+          tbody.innerHTML += rowHTML;
+        }
+      }
+
+      function sortDistricts(by) {
+        let tbody = document.querySelector("#districtBody");
+        let rows = Array.from(tbody.rows);
+        document.querySelectorAll(".btn").forEach((btn) => btn.classList.remove("active"));
+
+        if (by == "district") {
+          rows.sort((a, b) => a.cells[0].textContent.localeCompare(b.cells[0].textContent));
+          document.querySelector("button[onclick=\"sortDistricts('district')\"]").classList.add("active");
+        } else if (by == "totalSchools") {
+          rows.sort((a, b) => parseInt(b.cells[1].textContent) - parseInt(a.cells[1].textContent));
+          document.querySelector("button[onclick=\"sortDistricts('totalSchools')\"]").classList.add("active");
+        }
+        rows.forEach((r) => tbody.appendChild(r));
+      }
+
+      const yearsArr = ["2020-21", "2021-22", "2022-23", "2023-24", "2024-25"];
+
+      function handleYearButton(year) {
+        yearsArr.forEach((y) => {
+          document.getElementById(`btn${y}`).classList.remove("active");
+        });
+        document.getElementById(`btn${year}`).classList.add("active");
+        document.getElementById("cwsnCompiled").style.display = "none";
+        document.getElementById("sldCompiled").style.display = "none";
+        clearTopBottomTables();
+        populateTopBottomTables(year);
+      }
+
+      function populateTopBottomTables(year) {
+        const cwsnTop5Body = document.querySelector("#cwsnTop5Table tbody");
+        const cwsnBottom5Body = document.querySelector("#cwsnBottom5Table tbody");
+        const sldTop5Body = document.querySelector("#sldTop5Table tbody");
+        const sldBottom5Body = document.querySelector("#sldBottom5Table tbody");
+
+        cwsnTop5Body.innerHTML = "";
+        cwsnBottom5Body.innerHTML = "";
+        sldTop5Body.innerHTML = "";
+        sldBottom5Body.innerHTML = "";
+
+        let cwsnData = districtMaster.map((d, i) => ({
+          district: d[0],
+          students: yearlyData[year][i][1],
+        }));
+        let sldData = districtMaster.map((d, i) => ({
+          district: d[0],
+          students: yearlyData[year][i][3],
+        }));
+
+        let cwsnTop5 = [...cwsnData].sort((a, b) => b.students - a.students).slice(0, 5);
+        let cwsnBottom5 = [...cwsnData].sort((a, b) => a.students - b.students).slice(0, 5);
+        let sldTop5 = [...sldData].sort((a, b) => b.students - a.students).slice(0, 5);
+        let sldBottom5 = [...sldData].sort((a, b) => a.students - b.students).slice(0, 5);
+
+        function fillTable(tbody, data) {
+          data.forEach((entry, idx) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${idx + 1}</td><td class="district">${entry.district}</td><td>${entry.students}</td>`;
+            tbody.appendChild(tr);
+          });
+        }
+
+        fillTable(cwsnTop5Body, cwsnTop5);
+        fillTable(cwsnBottom5Body, cwsnBottom5);
+        fillTable(sldTop5Body, sldTop5);
+        fillTable(sldBottom5Body, sldBottom5);
+      }
+
+      function compileCWSN() {
+        document.getElementById("cwsnCompiled").style.display = "block";
+        document.getElementById("sldCompiled").style.display = "none";
+        clearTopBottomTables();
+        const tbody = document.querySelector("#cwsnAllYearsTable tbody");
+        tbody.innerHTML = "";
+
+        yearsArr.forEach((year) => {
+          let data = districtMaster.map((d, i) => ({
+            district: d[0],
+            students: yearlyData[year][i][1],
+          }));
+          data.sort((a, b) => b.students - a.students);
+          let top5Str = data.slice(0, 5).map((e) => `${e.district} – ${e.students}`).join(", ");
+          data.sort((a, b) => a.students - b.students);
+          let bottom5Str = data.slice(0, 5).map((e) => `${e.district} – ${e.students}`).join(", ");
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td class="sticky-left">${year}</td><td>${top5Str}</td><td>${bottom5Str}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function compileSLD() {
+        document.getElementById("sldCompiled").style.display = "block";
+        document.getElementById("cwsnCompiled").style.display = "none";
+        clearTopBottomTables();
+        const tbody = document.querySelector("#sldAllYearsTable tbody");
+        tbody.innerHTML = "";
+        yearsArr.forEach((year) => {
+          let data = districtMaster.map((d, i) => ({
+            district: d[0],
+            students: yearlyData[year][i][3],
+          }));
+          data.sort((a, b) => b.students - a.students);
+          let top5Str = data.slice(0, 5).map((e) => `${e.district} – ${e.students}`).join(", ");
+          data.sort((a, b) => a.students - b.students);
+          let bottom5Str = data.slice(0, 5).map((e) => `${e.district} – ${e.students}`).join(", ");
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td class="sticky-left">${year}</td><td>${top5Str}</td><td>${bottom5Str}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function clearTopBottomTables() {
+        document.querySelector("#cwsnTop5Table tbody").innerHTML = "";
+        document.querySelector("#cwsnBottom5Table tbody").innerHTML = "";
+        document.querySelector("#sldTop5Table tbody").innerHTML = "";
+        document.querySelector("#sldBottom5Table tbody").innerHTML = "";
+      }
+
+      const ctx = document.getElementById("trendChart").getContext("2d");
+      const trendChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: yearsArr,
+          datasets: [
+            {
+              label: "Schools with CWSN",
+              data: [93413, 116565, 112462, 105627, 98801],
+              borderColor: "rgba(102, 126, 234, 1)",
+              backgroundColor: "transparent",
+              tension: 0.4,
+              borderWidth: 3,
+            },
+            {
+              label: "Total CWSN Students",
+              data: [257020, 251684, 299532, 341087, 297897],
+              borderColor: "rgba(118, 75, 162, 1)",
+              backgroundColor: "transparent",
+              tension: 0.4,
+              borderWidth: 3,
+            },
+            {
+              label: "Schools with SLD",
+              data: [2099, 795, 7729, 24488, 5148],
+              borderColor: "rgba(38, 166, 154, 1)",
+              backgroundColor: "transparent",
+              tension: 0.4,
+              borderWidth: 3,
+            },
+            {
+              label: "Total SLD Students",
+              data: [2975, 1098, 12780, 50924, 9585],
+              borderColor: "rgba(244, 67, 54, 1)",
+              backgroundColor: "transparent",
+              tension: 0.4,
+              borderWidth: 3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "top",
+              labels: { font: { size: 14 } },
+            },
+            tooltip: { mode: "index", intersect: false },
+          },
+          interaction: { mode: "nearest", axis: "x", intersect: false },
+          scales: {
+            x: { title: { display: true, text: "Academic Year" } },
+            y: { title: { display: true, text: "Count" }, beginAtZero: true },
+          },
+        },
+      });
+
+      populateDistrictTable();
+      populateTopBottomTables("2024-25");
+    </script>
+  </body>
+</html>
