@@ -486,6 +486,36 @@ body.dark-mode canvas {
   font-size: 1.5rem; 
   transition: transform 0.2s ease;
 }
+body {
+    position: static !important;
+    overflow-x: hidden;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+}
+
+.copyright {
+    position: fixed !important;
+    bottom: 0;
+    right: 0;
+    font-size: 11.2px;
+    color: #666;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 5px 0 0 0;
+    z-index: 1000;
+    transform: none;
+    -webkit-transform: none;
+}
+
+@media (max-width: 600px) {
+    .copyright {
+        font-size: 9.6px;
+        padding: 3px 6px;
+        bottom: 0;
+        right: 0;
+    }
+}
     </style>
   </head>
   <body>
@@ -688,7 +718,7 @@ body.dark-mode canvas {
 
       <div class="footer">
         <p>Note: Dashboard is based on the SAMARTH database dated 29.05.2025, Session 2025-26 is under compilation 
-        <p>Samagra Shiksha, Uttar Pradesh</p></p>
+        <p>Department of Basic Education, Uttar Pradesh</p></p>
       </div>
     </div>
 
@@ -1420,6 +1450,13 @@ body.dark-mode canvas {
 
       populateDistrictTable();
       populateTopBottomTables("2024-25");
+      document.getElementById("copyright-year").textContent = new Date().getFullYear();
     </script>
+   <div class="copyright">
+    © <span id="copyright-year"></span> 
+    <a href="mailto:aliimran1143646@gmail.com" style="color: #666; text-decoration: none;">Ali Imran, Samagra Shiksha, Uttar Pradesh</a>
+</div>
+  </body>
+  </html>
   </body>
 </html>
