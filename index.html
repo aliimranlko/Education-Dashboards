@@ -11,7 +11,7 @@
       body {
         margin: 0;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: #00adef;
+        background: #00adef; /* UNICEF cyan blue */
         min-height: 100vh;
         display: flex;
         flex-direction: column;
@@ -57,6 +57,11 @@
         height: auto;
         border-radius: 10px;
         margin-bottom: 6px;
+      }
+      .logo svg {
+        width: 100%;
+        max-width: 250px;
+        height: auto;
       }
       .form-group {
         position: relative;
@@ -132,14 +137,17 @@
         }
       }
       .copyright {
-        position: fixed;
+        position: fixed !important;
         bottom: 0;
         right: 0;
         font-size: 11.2px;
-        color: #ffffffb3;
-        background-color: rgba(255, 255, 255, 0.2);
-        padding: 4px 7px;
+        color: #666;
+        background-color: rgba(255, 255, 255, 0.9); /* Adjusted for consistency */
+        padding: 5px 10px;
         border-radius: 5px 0 0 0;
+        z-index: 1000;
+        transform: none;
+        -webkit-transform: none;
       }
 
       @media (max-width: 600px) {
@@ -155,6 +163,13 @@
           text-align: center;
           font-size: 12px;
           padding: 0 10px;
+        }
+
+        .copyright {
+            font-size: 9.6px;
+            padding: 3px 6px;
+            bottom: 0;
+            right: 0;
         }
       }
       @keyframes fadeIn {
@@ -255,7 +270,7 @@
 
         if (username === correctUsername && password === correctPassword) {
           alert("Login successful! Redirecting...");
-          // window.location.href = "index.html";
+          window.location.href = "dashboard.html"; // Updated redirect to dashboard.html
         } else {
           errorMessage.style.display = "block";
           panel.classList.add("shake");
