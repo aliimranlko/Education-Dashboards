@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login - CWSN and SLD Dashboard</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #00adef;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .top-banner {
+        width: 100%;
+        background: #ffffff;
+        border-radius: 0 0 25px 25px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.342);
+        padding: 15px 0;
+        text-align: center;
+      }
+      .banner-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #00adef;
+      }
+      .clock-container {
+        width: 100%;
+        max-width: 1280px;
+        margin-top: 6px;
+        font-size: 13px;
+        color: #ffffff;
+        text-align: right;
+        padding: 0 20px;
+      }
+      .login-container {
+        backdrop-filter: blur(12px);
+        background: #ffffff;
+        border-radius: 25px;
+        padding: 50px 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.342);
+        width: 90%;
+        max-width: 420px;
+        text-align: center;
+        animation: fadeIn 1s ease-out;
+        margin-top: 30px;
+      }
+      .logo img {
+        width: 100%;
+        max-width: 250px;
+        height: auto;
+        border-radius: 10px;
+        margin-bottom: 6px;
+      }
+      .form-group {
+        position: relative;
+        margin-bottom: 25px;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 12px 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 15px;
+        outline: none;
+        background-color: #f9f9f9;
+        transition: 0.3s;
+      }
+      .form-group label {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        color: #555;
+        transition: 0.2s ease;
+        pointer-events: none;
+        font-size: 14px;
+      }
+      .form-group input:focus + label,
+      .form-group input:not(:placeholder-shown) + label {
+        top: -10px;
+        left: 10px;
+        font-size: 12px;
+        background: white;
+        padding: 0 4px;
+        color: #00adef;
+      }
+      .login-form button {
+        padding: 12px;
+        font-size: 16px;
+        width: 100%;
+        border: none;
+        border-radius: 5px;
+        background-color: #00adef;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s;
+      }
+      .login-form button:hover {
+        background-color: #008fc3;
+        transform: scale(1.03);
+      }
+      .error-message {
+        margin-top: 15px;
+        font-size: 14px;
+        color: #dc3545;
+        display: none;
+      }
+
+      .shake {
+        animation: shake 0.3s ease;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        50% {
+          transform: translateX(5px);
+        }
+        75% {
+          transform: translateX(-5px);
+        }
+      }
+      .copyright {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        font-size: 11.2px;
+        color: #ffffffb3;
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 4px 7px;
+        border-radius: 5px 0 0 0;
+      }
+
+      @media (max-width: 600px) {
+        .login-container {
+          padding: 30px 20px;
+        }
+
+        .banner-title {
+          font-size: 18px;
+        }
+
+        .clock-container {
+          text-align: center;
+          font-size: 12px;
+          padding: 0 10px;
+        }
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-40px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-banner">
+      <div class="banner-title">CWSN & SLD Monitoring Dashboard</div>
+    </div>
+    <div class="clock-container">
+      <div id="dateLine"></div>
+      <div id="timeLine"></div>
+    </div>
+    <div class="login-container" id="loginPanel">
+      <div class="logo">
+        <img
+          src="https://pbs.twimg.com/media/GIdHrVLa0AAfsB8?format=jpg&name=large"
+          alt="Logo"
+        />
+      </div>
+      <div class="login-form">
+        <div class="form-group">
+          <input type="text" id="username" placeholder=" " autocomplete="off" />
+          <label for="username">Username</label>
+        </div>
+        <div class="form-group">
+          <input
+            type="password"
+            id="password"
+            placeholder=" "
+            autocomplete="off"
+          />
+          <label for="password">Password</label>
+        </div>
+        <button onclick="handleLogin()">Login</button>
+        <div class="error-message" id="errorMessage">⚠ Invalid credentials</div>
+      </div>
+    </div>
+    <div class="copyright">
+      © 2025 Ali Imran, Samagra Shiksha, Uttar Pradesh
+    </div>
+    <script>
+      const encodedUsername = "YWRtaW4=";
+      const encodedPassword = "Q1dTbnNsZDEyMzQ=";
+
+      function handleLogin() {
+        const correctUsername = atob(encodedUsername);
+        const correctPassword = atob(encodedPassword);
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const errorMessage = document.getElementById("errorMessage");
+        const panel = document.getElementById("loginPanel");
+
+        if (username === correctUsername && password === correctPassword) {
+          window.location.href = "index.html";
+        } else {
+          errorMessage.style.display = "block";
+          panel.classList.add("shake");
+          setTimeout(() => panel.classList.remove("shake"), 400);
+        }
+      }
+
+      ["username", "password"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", () => {
+          document.getElementById("errorMessage").style.display = "none";
+        });
+      });
+
+      document.getElementById("password").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") handleLogin();
+      });
+      function updateClock() {
+        const now = new Date();
+        const istOffset = 5.5 * 60;
+        const localOffset = now.getTimezoneOffset();
+        const istTime = new Date(
+          now.getTime() + (istOffset + localOffset) * 60000
+        );
+        const timeOptions = {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        };
+        const dateOptions = {
+          weekday: "short",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        };
+        document.getElementById("timeLine").textContent =
+          istTime.toLocaleTimeString("en-IN", timeOptions);
+        document.getElementById("dateLine").textContent =
+          istTime.toLocaleDateString("en-IN", dateOptions);
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+    </script>
+  </body>
+</html>
