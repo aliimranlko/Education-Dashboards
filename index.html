@@ -179,10 +179,40 @@
     </div>
     <div class="login-container" id="loginPanel">
       <div class="logo">
-        <img
-          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgCkVpkLOBMjLC9o4E6haqIOrpVsSdaJatD1dDr_9HhnWOHWwYxE4ByO3RC3jq3Epu-kbIou6A7_Lh-RfHElOvHx40JADdMb4tR40kCK2f630X3fpaervwkCcBGE7zdrPkcKvBOqlGNuQWz/s1600/1000939989.jpg"
-          alt="Logo"
-        />
+        <svg
+          width="250"
+          height="80"
+          viewBox="0 0 250 80"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient
+              id="logoGradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" style="stop-color: #00adef; stop-opacity: 1" />
+              <stop
+                offset="100%"
+                style="stop-color: #0088cc; stop-opacity: 1"
+              />
+            </linearGradient>
+          </defs>
+          <rect width="250" height="80" fill="url(#logoGradient)" rx="12" />
+          <text
+            x="125"
+            y="47"
+            font-family="Segoe UI, Arial, sans-serif"
+            font-size="20"
+            font-weight="bold"
+            fill="white"
+            text-anchor="middle"
+          >
+            Welcome
+          </text>
+        </svg>
       </div>
       <div class="login-form">
         <div class="form-group">
@@ -206,19 +236,26 @@
       © 2025 Ali Imran, Samagra Shiksha, Uttar Pradesh
     </div>
     <script>
+      // Credentials: admin / CWSNsld1234
       const encodedUsername = "YWRtaW4=";
-      const encodedPassword = "Q1dTbnNsZDEyMzQ=";
+      const encodedPassword = "Q1dTTnNsZDEyMzQ=";
 
       function handleLogin() {
         const correctUsername = atob(encodedUsername);
         const correctPassword = atob(encodedPassword);
-        const username = document.getElementById("username").value;
+        const username = document.getElementById("username").value.trim();
         const password = document.getElementById("password").value;
         const errorMessage = document.getElementById("errorMessage");
         const panel = document.getElementById("loginPanel");
 
+        console.log("Entered username:", username);
+        console.log("Correct username:", correctUsername);
+        console.log("Entered password:", password);
+        console.log("Correct password:", correctPassword);
+
         if (username === correctUsername && password === correctPassword) {
-          window.location.href = "index.html";
+          alert("Login successful! Redirecting...");
+          // window.location.href = "index.html";
         } else {
           errorMessage.style.display = "block";
           panel.classList.add("shake");
@@ -235,6 +272,7 @@
       document.getElementById("password").addEventListener("keypress", (e) => {
         if (e.key === "Enter") handleLogin();
       });
+
       function updateClock() {
         const now = new Date();
         const istOffset = 5.5 * 60;
